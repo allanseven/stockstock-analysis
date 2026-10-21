@@ -11,6 +11,7 @@
 | 访问地址 | http://127.0.0.1:8765/ |
 | 技术栈 | 原生 HTML/JS/CSS + ECharts + Python 本地代理 |
 | 启动方式 | `start.bat` 或 `start.ps1` |
+| 停止方式 | `stop.bat` 或 `stop.ps1` |
 | 默认标的 | 上证指数 `000001` |
 
 把东方财富的两个公开接口包成一个极简交易终端 UI 的单页应用，跑在本地 8765 端口。
@@ -49,6 +50,8 @@ stockstock analysis
 ├── server.py         本地反向代理（curl + 4 次重试）
 ├── start.ps1         PowerShell 启动脚本
 ├── start.bat         CMD 启动脚本
+├── stop.ps1          PowerShell 停止脚本
+├── stop.bat          CMD 停止脚本
 └── README.md         本文档
 ```
 
@@ -69,6 +72,12 @@ cd "C:\Users\PC\Documents\stockstock analysis"
 python server.py
 ```
 然后浏览器访问 http://127.0.0.1:8765/
+
+### 停止服务
+
+双击 `stop.bat`（或右键 `stop.ps1` → 使用 PowerShell 运行）。
+它会找出占用 8765 端口的进程并结束它，再清理本目录下残留的 `server.py`，最后回报端口是否已释放。
+服务本身未运行时也可安全执行，会直接提示无需停止。
 
 ## 使用说明
 

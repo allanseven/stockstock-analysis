@@ -91,6 +91,8 @@ stockstock analysis/
 ├── server.py           Python 代理服务器（179 行）
 ├── start.bat           CMD 启动脚本
 ├── start.ps1           PowerShell 启动脚本
+├── stop.bat            CMD 停止脚本
+├── stop.ps1           PowerShell 停止脚本
 ├── README.md           项目说明文档
 ├── .gitignore          Git 忽略配置
 ├── server.log.out      标准输出日志
@@ -115,6 +117,14 @@ python server.py
 然后浏览器访问 http://127.0.0.1:8765/
 
 ---
+
+### 方式三：停止服务
+
+双击运行 `stop.bat` 或 `stop.ps1`，脚本会：
+
+1. 查出占用 8765 端口的进程并强制结束它
+2. 清理本目录下残留的 `server.py` 进程
+3. 回报端口是否已释放（未运行时会直接提示无需停止）
 
 ## 使用说明
 
