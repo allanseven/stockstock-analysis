@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A股 四线资金博弈分时图</title>
+  <link rel="stylesheet" href="./style.css?v=20261021-24" />
+  <!-- Vendored locally: the 1MB CDN bundle failed to load intermittently,
+     which left the chart blank. A local copy also makes the app work offline. -->
+<script src="./echarts.min.js?v=5.5.0"></script>
+</head>
+<body>
+  <div id="banner" class="banner"></div>
+
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">¥</span>
+        <span class="title">四线资金博弈</span>
+        <span class="sub">A 股 · 分时资金流向</span>
+      </div>
+
+      <div class="search">
+        <input
+          id="codeInput"
+          type="text"
+          inputmode="numeric"
+          maxlength="6"
+          placeholder="6 位代码（个股或指数）"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="loadBtn" type="button">加载</button>
+      </div>
+
+      <div class="status" id="status">
+        <span class="dot dot-idle"></span>
+        <span id="statusText">就绪</span>
+      </div>
+    </header>
+
+    <section class="quick-bar">
+      <div class="quick-group">
+        <span class="quick-label">指数</span>
+        <button data-code="000001" type="button">上证指数</button>
+        <button data-code="399001" type="button">深证成指</button>
+        <button data-code="399006" type="button">创业板指</button>
+        <button data-code="000300" type="button">沪深300</button>
+        <button data-code="000016" type="button">上证50</button>
+        <button data-code="000688" type="button">科创50</button>
+        <button data-code="000905" type="button">中证500</button>
+        <button data-code="000852" type="button">中证1000</button>
+      </div>
+      <div class="quick-group">
+        <span class="quick-label">个股</span>
+        <button data-code="600519" type="button">贵州茅台</button>
+        <button data-code="000001" data-market="0" type="button">平安银行</button>
+        <button data-code="300750" type="button">宁德时代</button>
+        <button data-code="600036" type="button">招商银行</button>
+        <button data-code="601318" type="button">中国平安</button>
+        <button data-code="688981" type="button">中芯国际</button>
+      </div>
+      <div class="quick-group">
+        <span class="quick-label">板块/ETF</span>
+        <button data-code="BK0475" data-market="90" type="button">银行板块</button>
+        <button data-code="BK0473" data-market="90" type="button">证券板块</button>
+        <button data-code="BK1128" data-market="90" type="button">CPO概念</button>
+        <button data-code="588170" data-market="1" type="button">科创半导体ETF</button>
+      </div>
+    </section>
+
+    <section class="date-bar-wrap">
+      <span class="quick-label">日期</span>
+      <div id="dateBar" class="date-bar"></div>
+      <span class="date-hint">日期数值 = 当日主力净流入（Y = 亿元）<br />最新交易日 = 分时 · 历史日 = 多日曲线</span>
+    </section>
+
+    <section class="info-bar" id="infoBar">
+      <div class="info-item">
+        <span class="label">代码</span>
+        <span class="value" id="infoCode">&mdash;</span>
+      </div>
+      <div class="info-item">
+        <span class="label">名称</span>
+        <button type="button" class="value link" id="infoName" title="点击查看详细信息">&mdash;</button>
+      </div>
+      <div class="info-item">
+        <span class="label">交易日期</span>
+        <span class="value" id="infoDate">&mdash;</span>
+      </div>
+      <div class="info-item info-change">
+        <span class="label">涨跌幅</span>
+        <span class="value" id="infoChange">&mdash;</span>
+      </div>
+      <div class="info-item legend legend-jg">
+        <span class="swatch"></span>
+        <span class="legend-label">机构 (特大单)</span>
+        <span class="legend-val" id="valJG">&mdash;</span>
+      </div>
+      <div class="info-item legend legend-zl">
+        <span class="swatch"></span>
+        <span class="legend-label">主力 (大单)</span>
+        <span class="legend-val" id="valZL">&mdash;</span>
+      </div>
+      <div class="info-item legend legend-zh">
+        <span class="swatch"></span>
+        <span class="legend-label">中户 (中单)</span>
+        <span class="legend-val" id="valZH">&mdash;</span>
+      </div>
+      <div class="info-item legend legend-sh">
+        <span class="swatch"></span>
+        <span class="legend-label">散户 (小单)</span>
+        <span class="legend-val" id="valSH">&mdash;</span>
+      </div>
+    </section>
+
+    <main class="chart-wrap">
+      <div id="chart"></div>
+    </main>
+
+  <div class="modal" id="detailModal" hidden>
+    <div class="modal-backdrop" data-close="1"></div>
+    <section class="modal-card" role="dialog" aria-modal="true">
+      <header class="modal-head">
+        <div class="modal-title">
+          <span id="dName">-</span>
+          <span class="dcode" id="dCode">-</span>
+          <span class="dtag" id="dIndustry" hidden></span>
+        </div>
+        <div class="dprice">
+          <span class="dlast" id="dLast">-</span>
+          <span class="dchg" id="dChg">-</span>
+        </div>
+        <button type="button" class="modal-x" id="detailClose" aria-label="关闭">&times;</button>
+      </header>
+
+      <nav class="dtabs" id="dTabs">
+        <button type="button" class="dtab active" data-klt="minute">分时</button>
+        <button type="button" class="dtab" data-klt="day">日K</button>
+        <button type="button" class="dtab" data-klt="week">周K</button>
+        <button type="button" class="dtab" data-klt="month">月K</button>
+      </nav>
+
+      <div class="dchart-wrap"><div id="dChart"></div><div class="dloading" id="dLoading" hidden></div></div>
+
+      <div class="dpanels">
+        <div class="dpanel">
+          <h3>行情数据</h3>
+          <dl class="dgrid" id="dQuoteGrid"></dl>
+        </div>
+        <div class="dpanel">
+          <h3>估值与标的</h3>
+          <dl class="dgrid" id="dValGrid"></dl>
+        </div>
+      </div>
+    </section>
+  </div>
+
+    <footer class="footnote">
+      数据来源：东方财富公开 API &middot; 仅供学习研究使用，不构成投资建议
+    </footer>
+  </div>
+
+  <div class="chip-preview" id="chipPreview" aria-hidden="true"></div>
+
+  <script src="./app.js?v=20261021-24"></script>
+</body>
+</html>
